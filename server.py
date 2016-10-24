@@ -53,6 +53,10 @@ def handle_server(bind_ip, bind_port, max_clients):
 
 
 def handle_client(client_socket, client_ip, client_port):
+    def send_data_to_client(data):
+        data += '\n'
+        client_socket.sendall(data.encode('utf8'))
+
     local = threading.local()
     local.rscp_version = None
 
@@ -63,10 +67,10 @@ def handle_client(client_socket, client_ip, client_port):
             if not data:
                 break
             
-            data = data.decode('ascii').strip().split(' ')
+            data = data.decode('utf8').strip().split(' ')
 
             if len(data) < 2:
-                client_socket.sendall(b'PROTOCOL_VIOLATION\n')
+                send_data_to_client('PROTOCOL_VIOLATION')
                 continue
             
             obj = data[0]
@@ -75,17 +79,17 @@ def handle_client(client_socket, client_ip, client_port):
 
             if not local.rscp_version:
                 if obj != 'RSCP' or action != 'VERSION' or len(parameters[0]) != 1:
-                    client_socket.sendall(b'NOT_A_RSCP_CLIENT\n')
+                    send_data_to_client('NOT_A_RSCP_CLIENT')
                     break
                 else:
                     local.rscp_version = parameters[0]
-                    client_socket.sendall(b'ACK\n')
+                    send_data_to_client('ACK')
                     continue
 
             if obj == 'POSITION':
                 if action == 'UPDATE':
                     if len(parameters[0]) != 1:
-                        client_socket.sendall(b'INVALID_PARAMETERS_NUMBER\n')
+                        send_data_to_client('INVALID_PARAMETERS_NUMBER')
                         continue
 
                     position = parameters[0]
@@ -93,11 +97,11 @@ def handle_client(client_socket, client_ip, client_port):
                     with open('positions.txt', 'a') as f:
                         f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
 
-                    client_socket.sendall(b'SUCCESS\n')
+                    send_data_to_client('SUCCESS')
                 else:
-                    client_socket.sendall(b'UNKNOWN_ACTION\n')
+                    send_data_to_client('UNKNOWN_ACTION')
             else:
-                client_socket.sendall(b'UNKNOWN_OBJECT\n')
+                send_data_to_client('UNKNOWN_OBJECT')
         except Exception as e:
             debug('recv error from {}:{}: {}'.format(client_ip, client_port, e), err=True)
 
