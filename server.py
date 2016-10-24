@@ -48,7 +48,7 @@ def handle_server(bind_ip, bind_port, max_clients):
 
 def handle_client(client_socket, client_ip, client_port):
     local = threading.local()
-    local.protocol_version = None
+    local.rscp_version = None
 
     while True:
         try:
@@ -67,12 +67,12 @@ def handle_client(client_socket, client_ip, client_port):
             action = data[1]
             parameters = data[2:]
 
-            if not local.protocol_version:
-                if obj != 'RAILSTATUS_CLIENT' or action != 'VERSION' or len(parameters[0]) != 1:
-                    client_socket.sendall(b'NOT_A_RAILSTATUS_CLIENT\n')
+            if not local.rscp_version:
+                if obj != 'RSCP' or action != 'VERSION' or len(parameters[0]) != 1:
+                    client_socket.sendall(b'NOT_A_RSCP_CLIENT\n')
                     break
                 else:
-                    local.protocol_version = parameters[0]
+                    local.rscp_version = parameters[0]
                     client_socket.sendall(b'ACK\n')
                     continue
 
