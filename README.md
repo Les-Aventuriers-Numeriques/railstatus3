@@ -11,6 +11,7 @@
 
   - Python 3
   - A modded Minecraft server with Railcraft and OpenComputers
+  - Railways, switches, etc
 
 ## Installation
 
@@ -26,25 +27,49 @@ None ATM.
 python server.py --ip=127.0.0.1 --port=8888 --clients=10
 ```
 
-  - `ip` The network interface to attach with (use `--ip=""` to listen to all interfaces)
-  - `port` The port to listen to. Use `--port=0` to choose a random free port
+  - `ip` The network interface to attach with (use `--ip="0.0.0.0"` to listen to all interfaces)
+  - `port` The port to listen to (use `--port=0` to choose a random unused port)
   - `clients` The maximum simultaneous clients allowed to connect to the server
 
 ## How it works
 
-Once started, `server.py` will first spawn a thread containing the server itself, with the clients connection handling
-logic. It will then listen to the specified interface/port for incoming connections. It will spawn one thread for
-each clients connecting, thus allowing the server to be multi-threaded and non-blocking for all clients. The protocol
-used between the clients and the server, named RSCP, is detailed in the section below.
+RailStatus consists of two components.
 
-### RSCP documentation
+### The RSCP server
 
-RSCP (acronym of **RailStatus Command Protocol**) is a custom network protocol used by OpenComputers devices inside a
-Minecraft world (known as "the clients") to communicate with a real-life RSCP server (known as "the server").
+First, once started, `server.py` will spawn a thread containing the RSCP server itself, with the clients connection handling
+logic. It will then listen to the specified interface/port for incoming connections. For each clients connecting, it
+will spawn one thread, thus allowing the server to be multi-threaded and non-blocking.
 
-#### Acknowledgements
+The RSCP protocol used between clients and the server is detailed in the section below.
 
-  - RSCP is built on top of TCP
-  - RSCP isn't encrypted
-  - Escape character is `\n`
-  - Communication between the clients and the server is full-duplex (which means that the server may send data to the clients without the client makes the request)
+### The HTTP server
+
+`server.py` will also run an HTTP server listening on the same interface as the one specified by the `ip` argument. The
+port used will be the one defined by the `port` argument, plus `5`.
+
+## RSCP specifications
+
+### Introduction
+
+RSCP (acronym of **RailStatus Command Protocol**) is a custom network protocol built on top of TCP, used by OpenComputers
+devices inside a Minecraft world (known as "the clients") to communicate with a real-life RSCP server (known as "the server").
+
+Communication between clients and the server is full-duplex, which means that:
+
+  - Clients can send commands to the server to perform specific actions like setting/retrieving values, start a specific task, etc
+  - The server can send commands to the clients even if these latter didn't requested them (kind of server push)
+
+### Acknowledgements
+
+  - Command separator is `\n`
+ 
+### Command format
+
+```
+<object> <action> <parameter1> <parameter2> [...] <parameterN>\n
+```
+  
+### Typical workflow
+
+The client, once successfully connected through a TCP socket to the server's one, must send the following command
