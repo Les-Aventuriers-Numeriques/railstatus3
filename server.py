@@ -1,6 +1,8 @@
 import socket
 import threading
 import sys
+import click
+import arrow
 
 
 def debug(message, err=False):
@@ -11,10 +13,14 @@ def debug(message, err=False):
     ), err=err)
 
 
-def run_server(bind_ip, bind_port, max_clients):
+@click.command()
+@click.option('--ip', default='127.0.0.1', help='Bind IP')
+@click.option('--port', default=8888, help='Bind port')
+@click.option('--clients', default=10, help='Maximum concurrent clients')
+def run_server(ip, port, clients):
     debug('Running server')
 
-    server_handler = threading.Thread(target=handle_server, args=(bind_ip, bind_port, max_clients))
+    server_handler = threading.Thread(target=handle_server, args=(ip, port, clients))
     server_handler.start()
 
 
@@ -102,4 +108,4 @@ def handle_client(client_socket, client_ip, client_port):
 if __name__ == '__main__':
     debug('Initializing')
 
-    run_server('127.0.0.1', 8888, 10)
+    run_server()
