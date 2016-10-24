@@ -63,12 +63,12 @@ def handle_client(client_socket, client_ip, client_port):
                 client_socket.sendall(b'PROTOCOL_VIOLATION\n')
                 continue
             
-            what = data[0]
-            command = data[1]
+            obj = data[0]
+            action = data[1]
             parameters = data[2:]
 
             if not local.protocol_version:
-                if what != 'RAILSTATUS' or command != 'VERSION' or len(parameters[0]) != 1:
+                if obj != 'RAILSTATUS_CLIENT' or action != 'VERSION' or len(parameters[0]) != 1:
                     client_socket.sendall(b'NOT_A_RAILSTATUS_CLIENT\n')
                     break
                 else:
@@ -76,8 +76,8 @@ def handle_client(client_socket, client_ip, client_port):
                     client_socket.sendall(b'ACK\n')
                     continue
 
-            if what == 'POSITION':
-                if command == 'UPDATE':
+            if obj == 'POSITION':
+                if action == 'UPDATE':
                     if len(parameters[0]) != 1:
                         client_socket.sendall(b'INVALID_PARAMETERS_NUMBER\n')
                         continue
@@ -89,9 +89,9 @@ def handle_client(client_socket, client_ip, client_port):
 
                     client_socket.sendall(b'SUCCESS\n')
                 else:
-                    client_socket.sendall(b'INVALID_COMMAND\n')
+                    client_socket.sendall(b'UNKNOWN_ACTION\n')
             else:
-                client_socket.sendall(b'INVALID_WHAT\n')
+                client_socket.sendall(b'UNKNOWN_OBJECT\n')
         except Exception as e:
             debug('recv error from {}:{}: {}'.format(client_ip, client_port, e), err=True)
 
