@@ -1,0 +1,105 @@
+import socket
+import threading
+import sys
+
+
+def debug(message, err=False):
+    click.echo('{} - {} - {}'.format(
+        arrow.now().format('DD/MM/YYYY HH:mm:ss'),
+        'ERR ' if err else 'INFO',
+        message
+    ), err=err)
+
+
+def run_server(bind_ip, bind_port, max_clients):
+    debug('Running server')
+
+    server_handler = threading.Thread(target=handle_server, args=(bind_ip, bind_port, max_clients))
+    server_handler.start()
+
+
+def handle_server(bind_ip, bind_port, max_clients):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        server_socket.bind((bind_ip, bind_port))
+        debug('Bind successful')
+    except Exception as e:
+        debug('Failed to bind to {}:{}: {}'.format(bind_ip, bind_port, e), err=True)
+        sys.exit(1)
+
+    server_socket.listen(max_clients)
+    debug('Listening to {}:{} with a clients limit of {}'.format(bind_ip, bind_port, max_clients))
+    
+    while True:
+        try:
+            client_socket, addr = server_socket.accept()
+            client_ip, client_port = addr[0], addr[1]
+            debug('New incomming connection from {}:{}'.format(client_ip, client_port))
+    
+            client_handler = threading.Thread(target=handle_client, args=(client_socket, client_ip, client_port))
+            client_handler.start()
+        except Exception as e:
+            debug('Server error: {}'.format(e), err=True)
+    
+    debug('Closing server socket')
+    server_socket.close()
+
+
+def handle_client(client_socket, client_ip, client_port):
+    local = threading.local()
+    local.protocol_version = None
+
+    while True:
+        try:
+            data = client_socket.recv(1024)
+
+            if not data:
+                break
+            
+            data = data.decode('ascii').strip().split(' ')
+
+            if len(data) < 2:
+                client_socket.sendall(b'PROTOCOL_VIOLATION\n')
+                continue
+            
+            what = data[0]
+            command = data[1]
+            parameters = data[2:]
+
+            if not local.protocol_version:
+                if what != 'RAILSTATUS' or command != 'VERSION' or len(parameters[0]) != 1:
+                    client_socket.sendall(b'NOT_A_RAILSTATUS_CLIENT\n')
+                    break
+                else:
+                    local.protocol_version = parameters[0]
+                    client_socket.sendall(b'ACK\n')
+                    continue
+
+            if what == 'POSITION':
+                if command == 'UPDATE':
+                    if len(parameters[0]) != 1:
+                        client_socket.sendall(b'INVALID_PARAMETERS_NUMBER\n')
+                        continue
+
+                    position = parameters[0]
+
+                    with open('positions.txt', 'a') as f:
+                        f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
+
+                    client_socket.sendall(b'SUCCESS\n')
+                else:
+                    client_socket.sendall(b'INVALID_COMMAND\n')
+            else:
+                client_socket.sendall(b'INVALID_WHAT\n')
+        except Exception as e:
+            debug('recv error from {}:{}: {}'.format(client_ip, client_port, e), err=True)
+
+    client_socket.close()
+    debug('Connection from {}:{} closed'.format(client_ip, client_port))
+
+
+if __name__ == '__main__':
+    debug('Initializing')
+
+    run_server('127.0.0.1', 8888, 10)
