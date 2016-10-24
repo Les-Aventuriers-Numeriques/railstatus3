@@ -35,7 +35,16 @@ python server.py --ip=127.0.0.1 --port=8888 --clients=10
 Once started, `server.py` will first spawn a thread containing the server itself, with the clients connection handling
 logic. It will then listen to the specified interface/port for incoming connections. It will spawn one thread for
 each clients connecting, thus allowing the server to be multi-threaded and non-blocking for all clients. The protocol
-used between the clients and the server is named RSCP (RailStatus Command Protocol), which is detailed in the section below.
+used between the clients and the server, named RSCP, is detailed in the section below.
 
-### RSCP (RailStatus Command Protocol)
+### RSCP documentation
 
+RSCP (acronym of **RailStatus Command Protocol**) is a custom network protocol used by OpenComputers devices inside a
+Minecraft world (known as "the clients") to communicate with a real-life RSCP server (known as "the server").
+
+#### Acknowledgements
+
+  - RSCP is built on top of TCP
+  - RSCP isn't encrypted
+  - Escape character is `\n`
+  - Communication between the clients and the server is full-duplex (which means that the server may send data to the clients without the client makes the request)
