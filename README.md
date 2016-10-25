@@ -67,11 +67,11 @@ A command consists of strings separated by spaces:
 
 Example:
 
-    POSITION UPDATE -455,252
+    POSITION UPDATE -455,252\n
 
-### Typical workflow
+### Handshake
 
-Every clients, once successfully connected to the server, must firstly send the following command:
+Every clients, once successfully connected to the server, must firstly send the following command to perform the handshake:
 
     RSCP VERSION <version number>\n
 
