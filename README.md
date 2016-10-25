@@ -23,9 +23,7 @@ None ATM.
 
 ## Usage
 
-```
-python server.py --ip=127.0.0.1 --port=8888 --clients=10
-```
+    python server.py --ip=127.0.0.1 --port=8888 --clients=10
 
   - `ip` The network interface to attach with (use `--ip="0.0.0.0"` to listen to all interfaces)
   - `port` The port to listen to (use `--port=0` to choose a random unused port)
@@ -37,11 +35,8 @@ RailStatus consists of two components.
 
 ### The RSCP server
 
-First, once started, `server.py` will spawn a thread containing the RSCP server itself, with the clients connection handling
-logic. It will then listen to the specified interface/port for incoming connections. For each clients connecting, it
-will spawn one thread, thus allowing the server to be multi-threaded and non-blocking.
-
-The RSCP protocol used between clients and the server is detailed in the section below.
+First, once started, `server.py` will spawn a multi-threaded RSCP server. The RSCP protocol used between clients
+and the server is detailed in the section below.
 
 ### The HTTP server
 
@@ -55,21 +50,34 @@ port used will be the one defined by the `port` argument, plus `5`.
 RSCP (acronym of **RailStatus Command Protocol**) is a custom network protocol built on top of TCP, used by OpenComputers
 devices inside a Minecraft world (known as "the clients") to communicate with a real-life RSCP server (known as "the server").
 
-Communication between clients and the server is full-duplex, which means that:
+Communication between clients and the server is full-duplex (bidirectional), which means that:
 
-  - Clients can send commands to the server to perform specific actions like setting/retrieving values, start a specific task, etc
-  - The server can send commands to the clients even if these latter didn't requested them (kind of server push)
+  - Clients can send commands to the server
+  - The server can send commands to the clients as well, even if these latter didn't requested them
 
 ### Acknowledgements
 
-  - Command separator is `\n`
+  - All commands (messages) and responses separator is `\n`
  
 ### Command format
 
-```
-<object> <action> <parameter1> <parameter2> [...] <parameterN>\n
-```
-  
+A command consists of strings separated by spaces:
+
+    <object> <action> <parameter1> <parameter2> [...] <parameterN>\n
+
+Example:
+
+    POSITION UPDATE -455,252
+
 ### Typical workflow
 
-The client, once successfully connected through a TCP socket to the server's one, must send the following command
+Every clients, once successfully connected to the server, must firstly send the following command:
+
+    RSCP VERSION <version number>\n
+
+Where `<version number>` is the RSCP version used (`1` at this moment of writing).
+
+The server will then acknowledge with the `ACK\n` response. You are now ready to send and receive commands.
+
+Failing to follow this workflow will result by a `NOT_A_RSCP_CLIENT\n` response from the server followed by an immediate connexion
+closing.
