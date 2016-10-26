@@ -57,7 +57,8 @@ Communication between clients and the server is full-duplex (bidirectional), whi
 
 ### Acknowledgements
 
-  - All commands (messages) and responses separator is `\n`
+  - All commands and responses separator is `\n`
+  - Encoding is UTF-8
  
 ### Command format
 
@@ -68,6 +69,15 @@ A command consists of strings separated by spaces:
 Example:
 
     POSITION UPDATE -455,252\n
+
+### Possible errors
+
+Errors that can be returned are:
+
+  - `BAD_FORMAT\n` - The sent command line isn't well-formed
+  - `UNKNOWN_OBJECT\n` - Unknown `<object>`
+  - `UNKNOWN_ACTION\n` - `<action>` isn't valid for this `<object>`
+  - `INVALID_PARAMETERS_NUMBER\n` - The number of parameters doesn't match the ones required by the sent command
 
 ### Handshake
 

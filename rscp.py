@@ -77,7 +77,7 @@ class Server:
                 data = data.decode('utf8').strip().split(' ')
 
                 if len(data) < 2:
-                    send_data_to_client('PROTOCOL_VIOLATION')
+                    send_data_to_client('BAD_FORMAT')
                     continue
                 
                 obj = data[0]
