@@ -104,7 +104,7 @@ class Server:
                         with open('positions.txt', 'a') as f:
                             f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
 
-                        send_data_to_client('SUCCESS')
+                        send_data_to_client('OK')
                     else:
                         send_data_to_client('UNKNOWN_ACTION')
                 else:

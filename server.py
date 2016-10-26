@@ -13,5 +13,9 @@ def run(ip, port, clients):
     rscp_server.run()
 
 
+# TODO
+# HTTP server http://flask.pocoo.org/
+# Push events to the browser https://flask-sse.readthedocs.io/en/latest/
+
 if __name__ == '__main__':
     run()
