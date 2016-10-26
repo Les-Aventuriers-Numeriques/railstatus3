@@ -83,6 +83,8 @@ Examples:
 
     C,RSCP_SET_VERSION,1\n
 
+See below for a complete list of available commands.
+
 #### Responses
 
     R,<response code>,"<data1>","<data2>","<dataN>"\n
@@ -98,16 +100,24 @@ Examples:
   - `UNKNOWN_COMMAND` - Unknown command `<name>`
   - `INVALID_PARAMETERS` - The number of parameters doesn't match the ones required by the command
   - `NOT_A_RSCP_CLIENT` - Handshake failure (see below)
+  - `ACK` - Handshake response success (see below)
 
 ### Handshake
 
-Every clients, once successfully connected to the server, must firstly send the following command to perform the handshake:
+Every clients, once successfully connected to the server, must send the `RSCP_SET_VERSION` command prior any other commands.
+See details below.
+
+### Available commands
+
+#### RSCP_SET_VERSION
 
     C,RSCP_SET_VERSION,<version number>\n
 
-Where `<version number>` is the RSCP version used (`1` at this moment of writing).
+  - `<version number>` - The RSCP version used (`1` at this moment of writing)
 
-The server will then acknowledge with the `ACK\n` response. You are now ready to send and receive commands.
+Handshake command. Must be sent prior any other commands.
+
+The server will then acknowledge with the `ACK` response code. You are now ready to send and receive commands.
 
 Failing to follow this workflow will result by a `NOT_A_RSCP_CLIENT` response code from the server followed by an immediate
 connexion closing.
