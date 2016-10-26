@@ -15,7 +15,7 @@ def run(ip, port, clients):
 
 # TODO
 # HTTP server http://flask.pocoo.org/
-# Push events to the browser https://flask-sse.readthedocs.io/en/latest/
+# SSE to the browser https://www.html5rocks.com/en/tutorials/eventsource/basics/
 
 if __name__ == '__main__':
     run()

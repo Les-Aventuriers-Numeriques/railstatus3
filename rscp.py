@@ -2,6 +2,7 @@ import socket
 import threading
 import arrow
 import click
+import csv
 
 
 def debug(message, err=False):
@@ -40,22 +41,19 @@ class Server:
             self.server_socket.bind((server_ip, server_port))
             debug('Bind successful')
         except Exception as e:
-            debug('Failed to bind to {}:{}: {}'.format(bind_ip, server_port, e), err=True)
+            debug('Failed to bind to {}:{}: {}'.format(server_ip, server_port, e), err=True)
 
         self.server_socket.listen(server_max_clients)
         debug('Listening to {}:{} with a clients limit of {}'.format(server_ip, server_port, server_max_clients))
         
         while True:
-            try:
-                client_socket, addr = self.server_socket.accept()
-                client_ip, client_port = addr[0], addr[1]
-                debug('New incomming connection from {}:{}'.format(client_ip, client_port))
-        
-                client_handler = threading.Thread(target=self.handle_client, args=(client_socket, client_ip, client_port))
-                client_handler.start()
-            except Exception as e:
-                debug('Server error: {}'.format(e), err=True)
-        
+            client_socket, addr = self.server_socket.accept()
+            client_ip, client_port = addr[0], addr[1]
+            debug('New incomming connection from {}:{}'.format(client_ip, client_port))
+
+            client_handler = threading.Thread(target=self.handle_client, args=(client_socket, client_ip, client_port))
+            client_handler.start()
+
         debug('Closing server socket')
         self.server_socket.close()
 
@@ -68,49 +66,72 @@ class Server:
         local.rscp_version = None
 
         while True:
-            try:
-                data = client_socket.recv(1024)
+            message = self.read_one_message(client_socket)
 
-                if not data:
+            if not message: # Empty message
+                send_data_to_client('BAD_FORMAT')
+                continue
+
+            message = self.parse_message(''.join(message))
+
+            if not message or len(message) <= 1:
+                send_data_to_client('BAD_FORMAT')
+                continue
+
+            type = message[0]
+            command = message[1]
+            parameters = message[2:]
+
+            if not local.rscp_version:
+                if command != 'RSCP_SET_VERSION':
+                    send_data_to_client('NOT_A_RSCP_CLIENT')
                     break
-                
-                data = data.decode('utf8').strip().split(' ')
-
-                if len(data) < 2:
-                    send_data_to_client('BAD_FORMAT')
-                    continue
-                
-                obj = data[0]
-                action = data[1]
-                parameters = data[2:]
-
-                if not local.rscp_version:
-                    if obj != 'RSCP' or action != 'VERSION' or len(parameters[0]) != 1:
-                        send_data_to_client('NOT_A_RSCP_CLIENT')
-                        break
-                    else:
-                        local.rscp_version = parameters[0]
-                        send_data_to_client('ACK')
-                        continue
-
-                if obj == 'POSITION':
-                    if action == 'UPDATE':
-                        if len(parameters[0]) != 1:
-                            send_data_to_client('INVALID_PARAMETERS_NUMBER')
-                            continue
-
-                        position = parameters[0]
-
-                        with open('positions.txt', 'a') as f:
-                            f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
-
-                        send_data_to_client('OK')
-                    else:
-                        send_data_to_client('UNKNOWN_ACTION')
+                elif len(parameters) != 1:
+                    send_data_to_client('INVALID_PARAMETERS')
+                    break
                 else:
-                    send_data_to_client('UNKNOWN_OBJECT')
-            except Exception as e:
-                debug('recv error from {}:{}: {}'.format(client_ip, client_port, e), err=True)
+                    local.rscp_version = parameters[0]
+                    send_data_to_client('ACK')
+                    continue
+
+            if command == 'UPDATE_POSITION':
+                if len(parameters) != 1:
+                    send_data_to_client('INVALID_PARAMETERS_NUMBER')
+                    continue
+
+                position = parameters[0]
+
+                with open('positions.txt', 'a') as f:
+                    f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
+
+                send_data_to_client('OK')
+            else:
+                send_data_to_client('UNKNOWN_COMMAND')
 
         client_socket.close()
         debug('Connection from {}:{} closed'.format(client_ip, client_port))
+
+    def read_one_message(self, client_socket):
+        buffer = client_socket.recv(1024)
+        buffering = True
+
+        while buffering:
+            if '\n' in buffer:
+                (line, buffer) = buffer.split('\n', 1)
+                yield line + '\n'
+            else:
+                more = client_socket.recv(1024)
+
+                if not more:
+                    buffering = False
+                else:
+                    buffer += more
+
+        if buffer:
+            yield buffer
+
+    def parse_message(self, message_string):
+        for row in csv.reader([message_string], dialect=csv.unix_dialect): # Should loop one time
+            return row
+
+        return False
