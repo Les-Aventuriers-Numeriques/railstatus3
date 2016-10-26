@@ -68,8 +68,8 @@ Communication between clients and the server is full-duplex (bi-directional), wh
 
 ### Messages format
 
-Messages are formatted exactly like a CSV line: the data is separated by commas (`,`), enclosed by double-quotes (`"`),
-and terminated by a `\n` character.
+Messages are formatted exactly like a CSV line: the data is separated by commas (`,`), occasionally enclosed by
+double-quotes (`"`) if data contains commas, and terminated by a `\n` character.
 
 As RSCP can be used in a bi-directional manner, the server and the clients have to know what kind of message is incomming
 in the socket: this can be either a command or a response. So the first "column" of the messages always have to indicate
@@ -81,7 +81,7 @@ this information: it can be either `C` for commands or `R` for responses. Detail
 
 Examples:
 
-    TODO
+    C,RSCP_SET_VERSION,1\n
 
 #### Responses
 
@@ -89,14 +89,15 @@ Examples:
 
 Examples:
 
-    TODO
+    R,NOT_A_RSCP_CLIENT\n
 
 `<response code>` can be:
 
   - `OK` - If all is good
   - `BAD_FORMAT` - The previously sent command wasn't well-formatted
   - `UNKNOWN_COMMAND` - Unknown command `<name>`
-  - `INVALID_PARAMETERS_NUMBER` - The number of parameters doesn't match the ones required by the command
+  - `INVALID_PARAMETERS` - The number of parameters doesn't match the ones required by the command
+  - `NOT_A_RSCP_CLIENT` - Handshake failure (see below)
 
 ### Handshake
 
@@ -108,5 +109,5 @@ Where `<version number>` is the RSCP version used (`1` at this moment of writing
 
 The server will then acknowledge with the `ACK\n` response. You are now ready to send and receive commands.
 
-Failing to follow this workflow will result by a `NOT_A_RSCP_CLIENT\n` response from the server followed by an immediate connexion
-closing.
+Failing to follow this workflow will result by a `NOT_A_RSCP_CLIENT` response code from the server followed by an immediate
+connexion closing.
