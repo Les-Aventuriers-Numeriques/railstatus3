@@ -78,7 +78,7 @@ class Server:
                 send_data_to_client('BAD_FORMAT')
                 continue
 
-            type = message[0]
+            command_type = message[0]
             command = message[1]
             parameters = message[2:]
 
