@@ -48,7 +48,7 @@ port used will be the one defined by the `port` argument, plus `5`.
 Its goal is to provide a web-based control interface to display data and send commands. It communicate with the RSCP server
 above.
 
-## RSCP specifications
+## RSCP specification
 
 ### Introduction
 
@@ -62,26 +62,27 @@ Communication between clients and the server is full-duplex (bi-directional), wh
 
 ### Acknowledgements
 
-  - Messages separator is `\n`
+  - Message separator is `\n`
   - Encoding is UTF-8
   - A client can connect to only one server at a time
 
-### Messages format
+### Message format
 
 Messages are formatted exactly like a CSV line: the data is separated by commas (`,`), occasionally enclosed by
-double-quotes (`"`) if data contains commas, and terminated by a `\n` character.
+double-quotes (`"`), and terminated by a `\n` character.
 
 As RSCP can be used in a bi-directional manner, the server and the clients have to know what kind of message is incomming
 in the socket: this can be either a command or a response. So the first "column" of the messages always have to indicate
 this information: it can be either `C` for commands or `R` for responses. Details below.
 
-#### Commands
+#### Command
 
     C,<name>,"<parameter1>","<parameter2>","<parameterN>"\n
 
 Examples:
 
     C,RSCP_SET_VERSION,1\n
+    C,TANK_UPDATE_FILL,f156jt4hb5dhv2e9df56dhf1r1eh54re,56000\n
 
 See below for a complete list of available commands.
 
@@ -92,6 +93,7 @@ See below for a complete list of available commands.
 Examples:
 
     R,NOT_A_RSCP_CLIENT\n
+    R,OK,21100\n
 
 `<response code>` can be:
 
@@ -117,7 +119,5 @@ See details below.
 
 Handshake command. Must be sent prior any other commands.
 
-The server will then acknowledge with the `ACK` response code. You are now ready to send and receive commands.
-
-Failing to follow this workflow will result by a `NOT_A_RSCP_CLIENT` response code from the server followed by an immediate
-connexion closing.
+The server will then acknowledge with the `ACK` response code. You are now ready to send and receive commands. Failing to follow
+this workflow will result by a `NOT_A_RSCP_CLIENT` response code from the server followed by an immediate connexion closing.
