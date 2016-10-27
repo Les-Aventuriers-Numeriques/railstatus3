@@ -7,4 +7,9 @@
     _|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|_|"""""|
     "`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'
 
-For the documentation, run `make html` in the `docs/` folder. You will then be able to read the HTML documentation in the `docs/_build` folder.
+Monitor and control your railways from anywhere (and more!)
+
+## Documentation
+
+For the full documentation, run `make html` in the `docs/` folder (requires the PyPi package `Sphinx`). You will then be
+able to read the HTML documentation at `docs/_build/html/index.html`.

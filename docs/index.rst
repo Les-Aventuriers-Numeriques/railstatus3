@@ -1,20 +1,17 @@
 RailStatus 3 documentation
 ==========================
 
-Contents:
+Monitor and control your railways from anywhere (and more!).
+
+Table of contents
+-----------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    prerequisites
    installation
    configuration
    usage
-   howitworks
+   overview
    rscp
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
