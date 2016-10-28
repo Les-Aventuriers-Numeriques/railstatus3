@@ -1,5 +1,5 @@
-RSCP specification
-==================
+RSCP specifications
+===================
 
 Introduction
 ------------
@@ -12,25 +12,24 @@ Communication between clients and the server is full-duplex (bi-directional), wh
   - Clients can send commands to the server, then gets a response
   - The server can send commands to the clients and getting responses as well, even if clients didn't requested them
 
-Acknowledgements
-----------------
-
-  - Message separator is ``\n``
-  - Encoding is UTF-8
-  - A client can connect to only one server at a time
-
 Message format
 --------------
 
-Messages are formatted exactly like a CSV line: the data is separated by commas (``,``), occasionally enclosed by
-double-quotes (``"``), and terminated by a ``\n`` character.
+Messages are UTF-8 encoded, formatted exactly like a CSV line with several columns:
+
+  - Column (data) separator is comma (``,``)
+  - Data may be enclosed by double-quotes (``"``)
+  - Message (line) is terminated by a ``\n`` character
 
 As RSCP can be used in a bi-directional manner, the server and the clients have to know what kind of message is incomming
 in the socket: this can be either a command or a response. So the first "column" of the messages always have to indicate
-this information: it can be either ``C`` for commands or ``R`` for responses. Details below.
+this information: it can be either ``C`` for commands or ``R`` for responses. The content of the next columns differs
+according to this information, which is detailed below.
 
 Command
 ```````
+
+A command is textual order which always have to be replied. It contain the command name and may also contain several parameters.
 
 ::
 
@@ -43,10 +42,13 @@ Examples:
     C,RSCP_SET_VERSION,1\n
     C,TANK_UPDATE_FILL,f156jt4hb5dhv2e9df56dhf1r1eh54re,56000\n
 
-See TODO for a complete list of available commands.
+See :ref:`available-commands` for a complete list.
 
 Response
 ````````
+
+Response is sent back after a command was handled. It contain the response code (which indicates if the command execution was
+successful or not). It may also contain additional data.
 
 ::
 
@@ -59,23 +61,27 @@ Examples:
     R,NOT_A_RSCP_CLIENT\n
     R,OK,21100\n
 
-``<response code>`` can be:
+``<response code>`` can be one of:
 
-  - ``OK`` - If all is good
-  - ``BAD_FORMAT`` - The previously sent command wasn't well-formatted
+  - ``OK`` - The command was executed successfuly
+  - ``BAD_FORMAT`` - The previously sent command wasn't well-formed
   - ``UNKNOWN_COMMAND`` - Unknown command ``<name>``
   - ``INVALID_PARAMETERS`` - The number of parameters doesn't match the ones required by the command
-  - ``NOT_A_RSCP_CLIENT`` - Handshake failure (see TODO)
-  - ``ACK`` - Handshake response success (see TODO)
+  - ``NOT_A_RSCP_CLIENT`` - Handshake failure (see :ref:`command-rscp-set-version`)
+  - ``ACK`` - Handshake response success (see :ref:`command-rscp-set-version`)
 
 Handshake
 ---------
 
 Every clients, once successfully connected to the server, must send the ``RSCP_SET_VERSION`` command prior any other commands.
-See TODO.
+See :ref:`command-rscp-set-version`.
+
+.. _available-commands:
 
 Available commands
 ------------------
+
+.. _command-rscp-set-version:
 
 RSCP_SET_VERSION
 ````````````````
