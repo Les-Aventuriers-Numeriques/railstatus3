@@ -14,6 +14,16 @@ def debug(message, err=False):
 
 
 class Server:
+    """Server class constructor.
+
+    :param server_ip: The IP to bind the server to
+    :type server_ip: string
+    :param server_port: The port the server will listen to
+    :type server_port: int
+    :param server_max_clients: The maximum number of clients that the server will handle
+    :type server_max_clients: int
+    """
+
     server_ip = None
     server_port = None
     server_max_clients = None
@@ -22,11 +32,17 @@ class Server:
     server_socket = None
 
     def __init__(self, server_ip, server_port, server_max_clients):
+        """Blabla
+        """
         self.server_ip = server_ip
         self.server_port = server_port
         self.server_max_clients = server_max_clients
 
     def run(self):
+        """Run the RSCP server.
+
+        This will run the server in a new thread dedicated to handle new incomming clients connection.
+        """
         self.server_handler = threading.Thread(
             target=self.handle_server,
             args=(self.server_ip, self.server_port, self.server_max_clients)

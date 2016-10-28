@@ -1,4 +1,6 @@
 Configuration
 =============
 
-None ATM.
+.. note::
+
+    None ATM.

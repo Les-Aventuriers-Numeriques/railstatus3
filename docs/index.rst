@@ -1,7 +1,7 @@
 RailStatus 3 documentation
 ==========================
 
-Monitor and control your railways from anywhere (and more!).
+Welcome! This documentation is about RailStatus 3, a system to monitor and control railways from anywhere and more.
 
 Table of contents
 -----------------
@@ -15,3 +15,4 @@ Table of contents
    usage
    overview
    rscp
+   api
