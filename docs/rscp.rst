@@ -68,23 +68,20 @@ Examples:
   - ``UNKNOWN_COMMAND`` - Unknown command ``<name>``
   - ``INVALID_PARAMETERS`` - The number of parameters doesn't match the ones required by the command
   - ``NOT_A_RSCP_CLIENT`` - Handshake failure (see :ref:`command-rscp-set-version`)
-  - ``ACK`` - Handshake response success (see :ref:`command-rscp-set-version`)
-
-Handshake
----------
-
-Every clients, once successfully connected to the server, must send the ``RSCP_SET_VERSION`` command prior any other commands.
-See :ref:`command-rscp-set-version`.
+  - ``ACK`` - Handshake success (see :ref:`command-rscp-set-version`)
 
 .. _available-commands:
 
 Available commands
 ------------------
 
+The following is a list of all available RSCP commands. For each commands you'll find, in parenthesis, which side (the client
+or the server) can use them.
+
 .. _command-rscp-set-version:
 
-RSCP_SET_VERSION
-````````````````
+RSCP_SET_VERSION (client)
+`````````````````````````
 
 ::
 
