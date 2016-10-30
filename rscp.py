@@ -14,7 +14,7 @@ def debug(message, err=False):
 
 
 class Server:
-    """Server class constructor.
+    """RSCP server class constructor. Once instantiated, you must call :func:`rscp.Server.run` to actually run the server.
 
     :param server_ip: The IP to bind the server to
     :type server_ip: string
@@ -24,46 +24,47 @@ class Server:
     :type server_max_clients: int
     """
 
-    server_ip = None
-    server_port = None
-    server_max_clients = None
+    _server_ip = None
+    _server_port = None
+    _server_max_clients = None
 
-    server_handler = None
-    server_socket = None
+    _server_handler = None
+    _server_socket = None
 
     def __init__(self, server_ip, server_port, server_max_clients):
-        """Blabla
-        """
-        self.server_ip = server_ip
-        self.server_port = server_port
-        self.server_max_clients = server_max_clients
+        self._server_ip = server_ip
+        self._server_port = server_port
+        self._server_max_clients = server_max_clients
 
     def run(self):
-        """Run the RSCP server.
-
-        This will run the server in a new thread dedicated to handle new incomming clients connection.
+        """Run the RSCP server in a new thread dedicated to handle new incomming client connection. See :func:`rscp.Server.handle_server`
+        for more informations about client connection handling.
         """
-        self.server_handler = threading.Thread(
+        self._server_handler = threading.Thread(
             target=self.handle_server,
-            args=(self.server_ip, self.server_port, self.server_max_clients)
+            args=(self._server_ip, self._server_port, self._server_max_clients)
         )
 
-        self.server_handler.start()
+        self._server_handler.start()
 
     def handle_server(self, server_ip, server_port, server_max_clients):
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        """Responsible of handling any new incomming client connection. For each new incoming connection, a new thread
+        is started, dedicated to this connection. The :func:`rscp.Server.handle_client` method is then used to handle
+        all things happening with the client and the server (command parsing, etc).
+        """
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-            self.server_socket.bind((server_ip, server_port))
+            self._server_socket.bind((server_ip, server_port))
             debug('Bind successful')
         except Exception as e:
             debug('Failed to bind to {}:{}: {}'.format(server_ip, server_port, e), err=True)
 
-        self.server_socket.listen(server_max_clients)
+        self._server_socket.listen(server_max_clients)
         debug('Listening to {}:{} with a clients limit of {}'.format(server_ip, server_port, server_max_clients))
         
         while True:
-            client_socket, addr = self.server_socket.accept()
+            client_socket, addr = self._server_socket.accept()
             client_ip, client_port = addr[0], addr[1]
             debug('New incomming connection from {}:{}'.format(client_ip, client_port))
 
@@ -71,9 +72,11 @@ class Server:
             client_handler.start()
 
         debug('Closing server socket')
-        self.server_socket.close()
+        self._server_socket.close()
 
     def handle_client(self, client_socket, client_ip, client_port):
+        """Responsible of handling any incoming data from a client.
+        """
         def send_data_to_client(data):
             data += '\n'
             client_socket.sendall(data.encode('utf8'))
