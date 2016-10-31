@@ -64,8 +64,7 @@ class Server:
         debug('Listening to {}:{} with a clients limit of {}'.format(server_ip, server_port, server_max_clients))
         
         while True:
-            client_socket, addr = self._server_socket.accept()
-            client_ip, client_port = addr[0], addr[1]
+            client_socket, (client_ip, client_port) = self._server_socket.accept()
             debug('New incomming connection from {}:{}'.format(client_ip, client_port))
 
             client_handler = threading.Thread(target=self.handle_client, args=(client_socket, client_ip, client_port))
