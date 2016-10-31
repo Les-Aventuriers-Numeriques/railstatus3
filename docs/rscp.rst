@@ -31,13 +31,13 @@ Command
 
 A command is textual order which always have to be replied. It contain the command name and may also contain several parameters.
 
-::
+.. code-block:: text
 
     C,<name>,"<parameter1>","<parameter2>","<parameterN>"\n
 
 Examples:
 
-::
+.. code-block:: text
 
     C,RSCP_SET_VERSION,1\n
     C,TANK_UPDATE_FILL,f156jt4hb5dhv2e9df56dhf1r1eh54re,56000\n
@@ -50,13 +50,13 @@ Response
 Response is sent back after a command was handled. It contain the response code (which indicates if the command execution was
 successful or not). It may also contain additional data.
 
-::
+.. code-block:: text
 
     R,<response code>,"<data1>","<data2>","<dataN>"\n
 
 Examples:
 
-::
+.. code-block:: text
 
     R,NOT_A_RSCP_CLIENT\n
     R,OK,21100\n
@@ -83,15 +83,27 @@ or the server) can use them.
 RSCP_SET_VERSION (client)
 `````````````````````````
 
-::
+.. code-block:: text
 
     C,RSCP_SET_VERSION,<version number>\n
+
+Handshake command. Must be sent prior any other commands. This allow the RSCP server to reject any incoming TCP connection
+that aren't a RSCP client.
 
 Parameters:
 
   - ``<version number>`` - The RSCP version used (``1`` at this moment of writing)
 
-Handshake command. Must be sent prior any other commands.
+Return:
 
-The server will then acknowledge with the ``ACK`` response code. You are now ready to send and receive commands. Failing to follow
-this workflow will result by a ``NOT_A_RSCP_CLIENT`` response code from the server followed by an immediate connexion closing.
+.. code-block:: text
+
+    R,ACK\n
+
+Handshake success. You are now ready to send and receive commands.
+
+.. code-block:: text
+
+    R,NOT_A_RSCP_CLIENT\n
+
+Invalid handshake workflow. The connexion will immediately be closed after this response is sent.
