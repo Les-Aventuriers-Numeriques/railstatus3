@@ -9,7 +9,7 @@ A single command line will run RailStatus. Go to its root directory and run:
 
 Available command line options are:
 
---ip       The network interface to attach the server to (use ``--ip="0.0.0.0"`` to attach to all interfaces), default to ``127.0.0.1``
+--ip       The network interface to attach the server to (use ``--ip=""`` to attach to all interfaces), default to ``127.0.0.1``
 --port     The port to listen to (use ``--port=0`` to choose a random unused port), default to ``8888``
 --clients  The maximum simultaneous clients allowed to connect to the server, default to ``10``
 
