@@ -1,3 +1,4 @@
+from enum import Enum
 import socket
 import threading
 import arrow
@@ -16,6 +17,15 @@ def debug(message, err=False):
 class Server:
     """RSCP (RailStatus Command Protocol) server. Once instantiated, you must call :func:`rscp.Server.run` to
     actually run the server.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import rscp
+
+        rscp_server = rscp.Server('127.0.0.1', 8888, 10)
+        rscp_server.run()
 
     :param server_ip: The IP to bind the server to
     :type server_ip: string
@@ -38,8 +48,7 @@ class Server:
         self._server_max_clients = server_max_clients
 
     def run(self):
-        """Run the RSCP server in a new thread dedicated to handle new incomming client connection. See :func:`rscp.Server.handle_server`
-        for more informations about client connection handling.
+        """Run the RSCP server in a new thread dedicated to handle new incomming client connection.
         """
         self._server_handler = threading.Thread(
             target=self.handle_server,
@@ -49,10 +58,6 @@ class Server:
         self._server_handler.start()
 
     def handle_server(self, server_ip, server_port, server_max_clients):
-        """Responsible of handling any new incomming client connection. For each new incoming connection, a new thread
-        is started, dedicated to this connection. The :func:`rscp.Server.handle_client` method is then used to handle
-        all things happening with the client and the server (command parsing, etc).
-        """
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
@@ -75,8 +80,6 @@ class Server:
         self._server_socket.close()
 
     def handle_client(self, client_socket, client_ip, client_port):
-        """Responsible of handling any incoming data from a client.
-        """
         def send_data_to_client(data):
             data += '\n'
             client_socket.sendall(data.encode('utf8'))
@@ -156,62 +159,73 @@ class Server:
         return False
 
 
-class Protocol:
-    """RSCP (RailStatus Command Protocol) Python wrapper. Prevent to manually forge and parse RSCP messages.
+class MessageType(Enum):
+    command = 'C'
+    response = 'R'
+
+
+class Message:
+    """Base class for RSCP (RailStatus Command Protocol) messages (see :class:`rscp.Command` and :class:`rscp.Response`).
+
+    Used to convert text message into Python object and vice-versa.
     """
 
-    def parse_message(self, message):
-        """Parse a RSCP message and return its data.
+    def parse(self, message):
+        """Parse a RSCP message and return its object representation.
 
         :param message: The RSCP message to parse.
         :type message: string
         """
         pass
 
-    class Command:
-        """RSCP commands. One method represent one command.
+    def to_string(self):
+        pass
+
+
+class Command(Message):
+    """RSCP commands. One method represent one command.
+    """
+
+    def rscp_set_version(self, version_number):
+        """Handshake command. Must be sent prior any other commands. This allow the RSCP server to
+        reject any incoming TCP connection that aren’t a RSCP client.
+
+        :param version_number: The RSCP version used (``1`` at this moment of writing)
+        :type version_number: int
         """
-
-        def rscp_set_version(self, version_number):
-            """Handshake command. Must be sent prior any other commands. This allow the RSCP server to
-            reject any incoming TCP connection that aren’t a RSCP client.
-
-            :param version_number: The RSCP version used (``1`` at this moment of writing)
-            :type version_number: int
-            """
-            pass
+        pass
 
 
-    class Response:
-        """RSCP responses.. One method represent one response.
+class Response(Message):
+    """RSCP responses. One method represent one response.
+    """
+
+    def ok(self):
+        """The command was executed successfuly.
         """
+        pass
 
-        def ok(self):
-            """The command was executed successfuly.
-            """
-            pass
+    def bad_format(self):
+        """The previously sent command wasn’t well-formed.
+        """
+        pass
 
-        def bad_format(self):
-            """The previously sent command wasn’t well-formed.
-            """
-            pass
+    def unknown_command(self):
+        """Unknown command.
+        """
+        pass
 
-        def unknown_command(self):
-            """Unknown command.
-            """
-            pass
+    def invalid_parameters(self):
+        """The number of parameters doesn’t match the ones required by the command.
+        """
+        pass
 
-        def invalid_parameters(self):
-            """The number of parameters doesn’t match the ones required by the command.
-            """
-            pass
+    def not_a_rscp_client(self):
+        """Handshake failure. See :func:`rscp.Protocol.Command.rscp_set_version`.
+        """
+        pass
 
-        def not_a_rscp_client(self):
-            """Handshake failure. See :func:`rscp.Protocol.Command.rscp_set_version`.
-            """
-            pass
-
-        def ack(self):
-            """Handshake success. See :func:`rscp.Protocol.Command.rscp_set_version`.
-            """
-            pass
+    def ack(self):
+        """Handshake success. See :func:`rscp.Protocol.Command.rscp_set_version`.
+        """
+        pass
