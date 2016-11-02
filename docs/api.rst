@@ -11,6 +11,10 @@ Python RSCP server
    :members:
    :undoc-members:
 
+.. autoclass:: rscp.Protocol
+   :members:
+   :undoc-members:
+
 Lua RSCP client
 ---------------
 

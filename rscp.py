@@ -14,7 +14,8 @@ def debug(message, err=False):
 
 
 class Server:
-    """RSCP server class constructor. Once instantiated, you must call :func:`rscp.Server.run` to actually run the server.
+    """RSCP (RailStatus Command Protocol) server. Once instantiated, you must call :func:`rscp.Server.run` to
+    actually run the server.
 
     :param server_ip: The IP to bind the server to
     :type server_ip: string
@@ -153,3 +154,64 @@ class Server:
             return row
 
         return False
+
+
+class Protocol:
+    """RSCP (RailStatus Command Protocol) Python wrapper. Prevent to manually forge and parse RSCP messages.
+    """
+
+    def parse_message(self, message):
+        """Parse a RSCP message and return its data.
+
+        :param message: The RSCP message to parse.
+        :type message: string
+        """
+        pass
+
+    class Command:
+        """RSCP commands. One method represent one command.
+        """
+
+        def rscp_set_version(self, version_number):
+            """Handshake command. Must be sent prior any other commands. This allow the RSCP server to
+            reject any incoming TCP connection that aren’t a RSCP client.
+
+            :param version_number: The RSCP version used (``1`` at this moment of writing)
+            :type version_number: int
+            """
+            pass
+
+
+    class Response:
+        """RSCP responses.. One method represent one response.
+        """
+
+        def ok(self):
+            """The command was executed successfuly.
+            """
+            pass
+
+        def bad_format(self):
+            """The previously sent command wasn’t well-formed.
+            """
+            pass
+
+        def unknown_command(self):
+            """Unknown command.
+            """
+            pass
+
+        def invalid_parameters(self):
+            """The number of parameters doesn’t match the ones required by the command.
+            """
+            pass
+
+        def not_a_rscp_client(self):
+            """Handshake failure. See :func:`rscp.Protocol.Command.rscp_set_version`.
+            """
+            pass
+
+        def ack(self):
+            """Handshake success. See :func:`rscp.Protocol.Command.rscp_set_version`.
+            """
+            pass
