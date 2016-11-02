@@ -159,17 +159,31 @@ class Server:
         return False
 
 
-class MessageType(Enum):
-    command = 'C'
-    response = 'R'
-
-
 class Message:
     """Base class for RSCP (RailStatus Command Protocol) messages (see :class:`rscp.Command` and :class:`rscp.Response`).
 
     Used to convert text message into Python object and vice-versa.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import rscp.Message
+
+        command = Message.parse('C,RSCP_SET_VERSION,1\\n') # Object
+        print(command) # String
     """
 
+    type = None
+    name = None
+    data = []
+
+    def __init__(self, type, name, *args):
+        self.type = type
+        self.name = name
+        self.data = args
+
+    @staticmethod
     def parse(self, message):
         """Parse a RSCP message and return its object representation.
 
@@ -178,54 +192,87 @@ class Message:
         """
         pass
 
-    def to_string(self):
-        pass
+    def __str__(self):
+        return '{type},{name}{data}'.format(
+            type=self.type,
+            name=self.name,
+            data=',' + ','.join(self.data) if self.data else None
+        )
 
 
 class Command(Message):
     """RSCP commands. One method represent one command.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import rscp.Command
+
+        print(Command.rscp_set_version(1))
     """
 
-    def rscp_set_version(self, version_number):
+    def __init__(self, name, *args):
+        super(Command, self).__init__('C', name, *args)
+
+    @staticmethod
+    def rscp_set_version(version_number):
         """Handshake command. Must be sent prior any other commands. This allow the RSCP server to
         reject any incoming TCP connection that aren’t a RSCP client.
 
         :param version_number: The RSCP version used (``1`` at this moment of writing)
         :type version_number: int
         """
-        pass
+        return Command('RSCP_SET_VERSION', version_number)
 
 
 class Response(Message):
     """RSCP responses. One method represent one response.
+
+    Example usage:
+
+    .. code-block:: python
+
+        import rscp.Response
+
+        print(Command.ok('some', 'data'))
     """
 
-    def ok(self):
+    def __init__(self, name, *args):
+        super(Response, self).__init__('R', name, *args)
+
+    @staticmethod
+    def ok(*args):
         """The command was executed successfuly.
         """
-        pass
+        return Response('OK', *args)
 
-    def bad_format(self):
+    @staticmethod
+    def bad_format():
         """The previously sent command wasn’t well-formed.
         """
-        pass
+        return Response('BAD_FORMAT')
 
-    def unknown_command(self):
+    @staticmethod
+    def unknown_command(command_name=None):
         """Unknown command.
         """
-        pass
+        return Response('UNKNOWN_COMMAND', command_name)
 
-    def invalid_parameters(self):
+    @staticmethod
+    def invalid_parameters(command_name=None):
         """The number of parameters doesn’t match the ones required by the command.
         """
-        pass
+        return Response('INVALID_PARAMETERS', command_name)
 
-    def not_a_rscp_client(self):
+    @staticmethod
+    def not_a_rscp_client():
         """Handshake failure. See :func:`rscp.Protocol.Command.rscp_set_version`.
         """
-        pass
+        return Response('NOT_A_RSCP_CLIENT')
 
-    def ack(self):
+    @staticmethod
+    def ack():
         """Handshake success. See :func:`rscp.Protocol.Command.rscp_set_version`.
         """
-        pass
+        return Response('ACK')
