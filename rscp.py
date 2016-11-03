@@ -27,12 +27,9 @@ class Server:
         rscp_server = rscp.Server('127.0.0.1', 8888, 10)
         rscp_server.run()
 
-    :param server_ip: The IP to bind the server to
-    :type server_ip: string
-    :param server_port: The port the server will listen to
-    :type server_port: int
-    :param server_max_clients: The maximum number of clients that the server will handle
-    :type server_max_clients: int
+    :param str server_ip: The IP to bind the server to
+    :param int server_port: The port the server will listen to
+    :param int server_max_clients: The maximum number of clients that the server will handle
     """
 
     _server_ip = None
@@ -187,8 +184,8 @@ class Message:
     def parse(self, message):
         """Parse a RSCP message and return its object representation.
 
-        :param message: The RSCP message to parse.
-        :type message: string
+        :param str message: The RSCP message to parse.
+        :return: Either a :class:`rscp.Command` or :class:`rscp.Response` object
         """
         pass
 
@@ -220,8 +217,8 @@ class Command(Message):
         """Handshake command. Must be sent prior any other commands. This allow the RSCP server to
         reject any incoming TCP connection that aren’t a RSCP client.
 
-        :param version_number: The RSCP version used (``1`` at this moment of writing)
-        :type version_number: int
+        :param int version_number: The RSCP version used (``1`` at this moment of writing)
+        :rtype: Command
         """
         return Command('RSCP_SET_VERSION', version_number)
 
@@ -244,35 +241,47 @@ class Response(Message):
     @staticmethod
     def ok(*args):
         """The command was executed successfuly.
+
+        :rtype: Response
         """
         return Response('OK', *args)
 
     @staticmethod
     def bad_format():
         """The previously sent command wasn’t well-formed.
+
+        :rtype: Response
         """
         return Response('BAD_FORMAT')
 
     @staticmethod
     def unknown_command(command_name=None):
         """Unknown command.
+
+        :rtype: Response
         """
         return Response('UNKNOWN_COMMAND', command_name)
 
     @staticmethod
     def invalid_parameters(command_name=None):
         """The number of parameters doesn’t match the ones required by the command.
+
+        :rtype: Response
         """
         return Response('INVALID_PARAMETERS', command_name)
 
     @staticmethod
     def not_a_rscp_client():
-        """Handshake failure. See :func:`rscp.Protocol.Command.rscp_set_version`.
+        """Handshake failure. See :func:`rscp.Command.rscp_set_version`.
+
+        :rtype: Response
         """
         return Response('NOT_A_RSCP_CLIENT')
 
     @staticmethod
     def ack():
-        """Handshake success. See :func:`rscp.Protocol.Command.rscp_set_version`.
+        """Handshake success. See :func:`rscp.Command.rscp_set_version`.
+
+        :rtype: Response
         """
         return Response('ACK')
