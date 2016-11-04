@@ -4,6 +4,7 @@ import threading
 import arrow
 import click
 import csv
+import io
 
 
 def debug(message, err=False):
@@ -47,6 +48,7 @@ class Server:
     def run(self):
         """Run the RSCP server in a new thread dedicated to handle new incomming client connection.
         """
+
         self._server_handler = threading.Thread(
             target=self.handle_server,
             args=(self._server_ip, self._server_port, self._server_max_clients)
@@ -88,44 +90,39 @@ class Server:
             message = self.read_one_message(client_socket)
 
             if not message: # Empty message
-                send_data_to_client('BAD_FORMAT')
+                break
+
+            try:
+                message = Message.parse(''.join(message))
+            except MessageParsingException:
+                send_data_to_client(Response.bad_format())
                 continue
-
-            message = self.parse_message(''.join(message))
-
-            if not message or len(message) <= 1:
-                send_data_to_client('BAD_FORMAT')
-                continue
-
-            command_type = message[0]
-            command = message[1]
-            parameters = message[2:]
 
             if not local.rscp_version:
-                if command != 'RSCP_SET_VERSION':
-                    send_data_to_client('NOT_A_RSCP_CLIENT')
+                if message.name != 'RSCP_SET_VERSION':
+                    send_data_to_client(Response.not_a_rscp_client())
                     break
-                elif len(parameters) != 1:
-                    send_data_to_client('INVALID_PARAMETERS')
+                elif len(message.data) != 1:
+                    send_data_to_client(Response.invalid_parameters(message.name))
                     break
                 else:
-                    local.rscp_version = parameters[0]
-                    send_data_to_client('ACK')
+                    local.rscp_version = message.data[0]
+                    send_data_to_client(Response.ack())
                     continue
 
-            if command == 'UPDATE_POSITION':
-                if len(parameters) != 1:
-                    send_data_to_client('INVALID_PARAMETERS_NUMBER')
+            if message.name == 'UPDATE_POSITION':
+                if len(message.data) != 1:
+                    send_data_to_client(Response.invalid_parameters(message.name))
                     continue
 
-                position = parameters[0]
+                position = message.data[0]
 
                 with open('positions.txt', 'a') as f:
                     f.write(arrow.now().format('DD/MM/YYYY HH:mm:ss') + ' : ' + position + '\n')
 
-                send_data_to_client('OK')
+                send_data_to_client(Response.ok())
             else:
-                send_data_to_client('UNKNOWN_COMMAND')
+                send_data_to_client(Response.unknown_command(message.name))
 
         client_socket.close()
         debug('Connection from {}:{} closed'.format(client_ip, client_port))
@@ -148,12 +145,6 @@ class Server:
 
         if buffer:
             yield buffer
-
-    def parse_message(self, message_string):
-        for row in csv.reader([message_string], dialect=csv.unix_dialect): # Should loop one time
-            return row
-
-        return False
 
 
 class Message:
@@ -187,14 +178,42 @@ class Message:
         :param str message: The RSCP message to parse.
         :return: Either a :class:`rscp.Command` or :class:`rscp.Response` object
         """
-        pass
+
+        message = io.StringIO(message)
+        message_parsed = None
+
+        for row in csv.reader(message, dialect=csv.unix_dialect): # Should loop one time
+            message_parsed = row
+            break
+
+        if not message_parsed:
+            raise MessageParsingException('Invalid message format')
+
+        message_type = message_parsed[0]
+        message_name = message_parsed[1]
+        parameters = message_parsed[2:]
+
+        if message_type == 'C':
+            if hasattr(Command, message_name) and callable(getattr(Command, message_name)):
+                return getattr(Command, message_name)(*parameters)
+            else:
+                raise MessageParsingException('Invalid command name')
+        elif message_type == 'R':
+            if hasattr(Response, message_name) and callable(getattr(Response, message_name)):
+                return getattr(Response, message_name)(*parameters)
+            else:
+                raise MessageParsingException('Invalid response name')
+        else:
+            raise MessageParsingException('Invalid message type')
 
     def __str__(self):
-        return '{type},{name}{data}'.format(
-            type=self.type,
-            name=self.name,
-            data=',' + ','.join(self.data) if self.data else None
-        )
+        message_parsed = [self.type, self.name] + self.data
+
+        with io.StringIO() as message:
+            writer = csv.writer(message)
+            writer.writerow(message_parsed)
+
+        return message.read()
 
 
 class Command(Message):
@@ -220,6 +239,7 @@ class Command(Message):
         :param int version_number: The RSCP version used (``1`` at this moment of writing)
         :rtype: Command
         """
+
         return Command('RSCP_SET_VERSION', version_number)
 
 
@@ -244,6 +264,7 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('OK', *args)
 
     @staticmethod
@@ -252,6 +273,7 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('BAD_FORMAT')
 
     @staticmethod
@@ -260,6 +282,7 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('UNKNOWN_COMMAND', command_name)
 
     @staticmethod
@@ -268,6 +291,7 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('INVALID_PARAMETERS', command_name)
 
     @staticmethod
@@ -276,6 +300,7 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('NOT_A_RSCP_CLIENT')
 
     @staticmethod
@@ -284,4 +309,9 @@ class Response(Message):
 
         :rtype: Response
         """
+
         return Response('ACK')
+
+
+class MessageParsingException(Exception):
+    pass
