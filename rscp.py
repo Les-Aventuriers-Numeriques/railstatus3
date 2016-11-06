@@ -180,12 +180,12 @@ class Message:
         :return: Either a :class:`rscp.Command` or :class:`rscp.Response` object
         """
 
-        message = io.StringIO(message)
         message_parsed = None
-
-        for row in csv.reader(message, dialect=csv.unix_dialect): # Should loop one time
-            message_parsed = row
-            break
+        
+        with io.StringIO(message) as message_io:
+          for row in csv.reader(message_io, dialect=csv.unix_dialect): # Should loop one time
+              message_parsed = row
+              break
 
         if not message_parsed:
             raise MessageParsingException('Invalid message format')
@@ -209,12 +209,17 @@ class Message:
 
     def __str__(self):
         message_parsed = [self._type, self.name] + self.data
+        
+        message_io = io.StringIO()
 
-        with io.StringIO() as message:
-            writer = csv.writer(message)
-            writer.writerow(message_parsed)
+        writer = csv.writer(message_io, dialect=csv.unix_dialect)
+        writer.writerow(message_parsed)
+        
+        message = message_io.read()
+        
+        message_io.close()
 
-        return message.read()
+        return message
 
 
 class Command(Message):
