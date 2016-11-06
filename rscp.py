@@ -16,8 +16,8 @@ def debug(message, err=False):
 
 
 class Server:
-    """RSCP (RailStatus Command Protocol) server. Once instantiated, you must call :func:`rscp.Server.run` to
-    actually run the server.
+    """RSCP (RailStatus Command Protocol) server. Once instantiated, you must call :func:`rscp.Server.run` to actually
+    run the server.
 
     Example usage:
 
@@ -50,13 +50,13 @@ class Server:
         """
 
         self._server_handler = threading.Thread(
-            target=self.handle_server,
+            target=self._handle_server,
             args=(self._server_ip, self._server_port, self._server_max_clients)
         )
 
         self._server_handler.start()
 
-    def handle_server(self, server_ip, server_port, server_max_clients):
+    def _handle_server(self, server_ip, server_port, server_max_clients):
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
@@ -72,24 +72,24 @@ class Server:
             client_socket, (client_ip, client_port) = self._server_socket.accept()
             debug('New incomming connection from {}:{}'.format(client_ip, client_port))
 
-            client_handler = threading.Thread(target=self.handle_client, args=(client_socket, client_ip, client_port))
+            client_handler = threading.Thread(target=self._handle_client, args=(client_socket, client_ip, client_port))
             client_handler.start()
 
         debug('Closing server socket')
         self._server_socket.close()
 
-    def handle_client(self, client_socket, client_ip, client_port):
+    def _handle_client(self, client_socket, client_ip, client_port):
         def send_data_to_client(data):
-            data += '\n'
+            data = str(data) + '\n'
             client_socket.sendall(data.encode('utf8'))
 
         local = threading.local()
         local.rscp_version = None
 
         while True:
-            message = self.read_one_message(client_socket)
+            message = self._read_one_message(client_socket)
 
-            if not message: # Empty message
+            if not message: # Empty message, disconnect the client
                 break
 
             try:
@@ -98,8 +98,9 @@ class Server:
                 send_data_to_client(Response.bad_format())
                 continue
 
+            # Handshake
             if not local.rscp_version:
-                if message.name != 'RSCP_SET_VERSION':
+                if message.__class__.__name__ != 'Command' or message.name != 'RSCP_SET_VERSION':
                     send_data_to_client(Response.not_a_rscp_client())
                     break
                 elif len(message.data) != 1:
@@ -127,7 +128,7 @@ class Server:
         client_socket.close()
         debug('Connection from {}:{} closed'.format(client_ip, client_port))
 
-    def read_one_message(self, client_socket):
+    def _read_one_message(self, client_socket):
         buffer = client_socket.recv(1024)
         buffering = True
 
@@ -162,12 +163,12 @@ class Message:
         print(command) # String
     """
 
-    type = None
+    _type = None
     name = None
     data = []
 
     def __init__(self, type, name, *args):
-        self.type = type
+        self._type = type
         self.name = name
         self.data = args
 
@@ -207,7 +208,7 @@ class Message:
             raise MessageParsingException('Invalid message type')
 
     def __str__(self):
-        message_parsed = [self.type, self.name] + self.data
+        message_parsed = [self._type, self.name] + self.data
 
         with io.StringIO() as message:
             writer = csv.writer(message)

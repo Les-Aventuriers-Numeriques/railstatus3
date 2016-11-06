@@ -9,6 +9,7 @@ Python implementation (server)
 
 .. autoclass:: rscp.Server
    :members:
+   :undoc-members:
 
 .. autoclass:: rscp.Message
    :members:
