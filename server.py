@@ -1,5 +1,7 @@
 import click
 import rscp
+import logging
+import sys
 
 
 @click.command()
@@ -7,6 +9,14 @@ import rscp
 @click.option('--port', default=8888, help='Bind port')
 @click.option('--clients', default=10, help='Maximum concurrent clients')
 def run(ip, port, clients):
+    logging.basicConfig(
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S',
+        stream=sys.stdout
+    )
+
+    logging.getLogger().setLevel(logging.INFO)
+
     rscp.debug('Running RSCP server')
 
     rscp_server = rscp.Server(ip, port, clients)

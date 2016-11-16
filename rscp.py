@@ -1,18 +1,18 @@
-from enum import Enum
 import socket
 import threading
 import arrow
-import click
 import csv
 import io
+import logging
+import sys
 
 
-def debug(message, err=False):
-    click.echo('{} - {} - {}'.format(
-        arrow.now().format('DD/MM/YYYY HH:mm:ss'),
-        'ERR ' if err else 'INFO',
-        message
-    ), err=err)
+def debug(message, err=False, terminate=False):
+    """Log a regular or error message to the standard output, optionally terminating the script."""
+    logging.getLogger().log(logging.ERROR if err else logging.INFO, message)
+
+    if terminate:
+        sys.exit(1)
 
 
 class Server:
